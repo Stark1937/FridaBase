@@ -15,8 +15,8 @@
 
 Date         : 2017-02-21 12:43:08
 LastEditors  : Stark1937
-LastEditTime : 2023-02-07 20:01:31
-FilePath     : /frida/run.py
+LastEditTime : 2023-02-16 17:26:43
+FilePath     : /FridaBase/run.py
 '''
 
 import sys
@@ -98,13 +98,17 @@ def loadJsFile(session, filename):
     #     source = source + f.read()
     with open(filename, 'r') as f:
         source = source + f.read()
+    print('source',source)
     script = session.create_script(source)  # 加载脚本
     script.on('message', on_message)
     script.load()
     return script
 
 
-appname = 'something'
+# appname = 'something'
+bundle_identifier = 'com.telkomsel.wallet'
+jsname = 'hook_linkajaJB.js'
+# jsname = 'hook_jailbreak.js'
 
 def main():
     global session
@@ -116,26 +120,16 @@ def main():
     # 6. 动态Hook
     session = {}
     try:
-        session = device.attach(appname)
+        pid = device.spawn([bundle_identifier])
+        session = device.attach(pid)
         print('try session',session)
     except Exception as e:
         print('Exception',e)
-        while session == {}:
-            try:
-                session = device.attach(appname) 
-            except frida.ProcessNotFoundError:
-                pass
-        print('except session',session)
 
-    
-    while session == {}:
-        try:
-            session = device.attach(appname) 
-        except frida.ProcessNotFoundError:
-            pass
-            # print(session)
-    script = loadJsFile(session, './js/hook_DANA.js')
+    script = loadJsFile(session, './js/'+jsname)
+    device.resume(pid)
     sys.stdin.read()
+    
 
 if __name__ == '__main__':
     try:
